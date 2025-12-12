@@ -50,12 +50,12 @@ export default function Sessions() {
   ];
 
   const upcomingSessions = [
-    {
-      id: 1,
-      title: "Individual Therapy",
-      date: "Jul 15, 2024 - 10:00 AM",
-      status: "Join",
-    },
+    // {
+    //   id: 1,
+    //   title: "Individual Therapy",
+    //   date: "Jul 15, 2024 - 10:00 AM",
+    //   status: "Join",
+    // },
   ];
 
   const pastSessions = [
