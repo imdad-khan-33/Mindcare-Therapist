@@ -14,6 +14,7 @@ import sessionRoutes from "./routes/sessions.js";
 import exerciseRoutes from "./routes/exercises.js";
 import userRoutes from "./routes/user.js";
 import bookingsRoutes from "./routes/bookings.js";
+import mentalHealthRoutes from "./routes/mentalHealth.js";
 
 // Import auth config
 import "./config/passport.js";
@@ -73,6 +74,7 @@ app.use("/api/sessions", sessionRoutes);
 app.use("/api/exercises", exerciseRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/bookings", bookingsRoutes);
+app.use("/api/mental-health", mentalHealthRoutes);
 
 // Serve frontend
 if (process.env.NODE_ENV === "production") {

@@ -10,7 +10,7 @@ const UserSchema = new mongoose.Schema(
       unique: true,
       match: [/.+\@.+\..+/, "Please fill a valid email address"],
     },
-    password: { type: String, required: true, minlength: 6 },
+    password: { type: String, minlength: 6 },
     googleId: String,
     avatar: String,
     bio: String,
@@ -22,7 +22,8 @@ const UserSchema = new mongoose.Schema(
 
 // Hash password before saving
 UserSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+  // Skip hashing if password doesn't exist (Google OAuth users) or not modified
+  if (!this.password || !this.isModified("password")) return next();
 
   try {
     const salt = await bcryptjs.genSalt(10);

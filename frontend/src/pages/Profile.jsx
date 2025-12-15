@@ -1,5 +1,3 @@
-"use client";
-
 import { useContext, useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import { AuthContext } from "../context/AuthContext.jsx";
@@ -13,6 +11,7 @@ export default function Profile() {
   const [therapyGoals, setTherapyGoals] = useState("");
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     fetchUser();
@@ -36,11 +35,25 @@ export default function Profile() {
     e.preventDefault();
     setLoading(true);
     setSuccessMessage("");
+    setErrorMessage("");
+
+    // Validation: Check if all fields are empty
+    if (!name.trim() && !bio.trim() && !therapyGoals.trim()) {
+      setErrorMessage("Please fill at least one field to update your profile.");
+      setLoading(false);
+      return;
+    }
+
+    // Prepare update data - only include fields that have values
+    const updateData = {};
+    if (name.trim()) updateData.name = name.trim();
+    if (bio.trim()) updateData.bio = bio.trim();
+    if (therapyGoals.trim()) updateData.therapyGoals = therapyGoals.trim();
 
     try {
       await axios.put(
         `${import.meta.env.VITE_API_URL}/user/profile`,
-        { name, bio, therapyGoals },
+        updateData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -59,7 +72,11 @@ export default function Profile() {
       }, 3000);
     } catch (err) {
       console.error("Failed to update profile:", err);
-      alert("Failed to update profile. Please try again.");
+      setErrorMessage("Failed to update profile. Please try again.");
+
+      setTimeout(() => {
+        setErrorMessage("");
+      }, 3000);
     } finally {
       setLoading(false);
     }
@@ -77,12 +94,23 @@ export default function Profile() {
   return (
     <Layout>
       <div className="p-8 bg-gray-50 min-h-screen">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Your Profile</h1>
+        <div className="relative inline-block mb-8  ml-[50px]">
+          <span className="absolute -left-4 top-0 bottom-0 w-16 bg-yellow-300 -z-10 transform -skew-x-12"></span>
+          <h1 className="text-3xl font-bold text-gray-900 relative">
+            Your Profile
+          </h1>
+        </div>
 
         <div className="bg-white rounded-lg shadow p-6 max-w-2xl">
           {successMessage && (
             <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
               {successMessage}
+            </div>
+          )}
+
+          {errorMessage && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              {errorMessage}
             </div>
           )}
 

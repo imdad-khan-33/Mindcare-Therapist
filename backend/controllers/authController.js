@@ -141,11 +141,23 @@ export const googleAuthCallback = (req, res) => {
     const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
-    return res.redirect(`${process.env.REACT_APP_URL}?token=${token}`);
+
+    // Send user data along with token
+    const userData = encodeURIComponent(
+      JSON.stringify({
+        _id: req.user._id,
+        name: req.user.name,
+        email: req.user.email,
+        avatar: req.user.avatar,
+        bio: req.user.bio,
+        level: req.user.level,
+      })
+    );
+
+    return res.redirect(
+      `${process.env.REACT_APP_URL}/?token=${token}&user=${userData}`
+    );
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return res.redirect(`${process.env.REACT_APP_URL}/login?error=auth_failed`);
   }
 };

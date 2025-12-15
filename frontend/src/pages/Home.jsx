@@ -1,5 +1,3 @@
-"use client";
-
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
@@ -7,9 +5,44 @@ import { AuthContext } from "../context/AuthContext.jsx";
 import axios from "axios";
 
 export default function Home() {
-  const { token } = useContext(AuthContext);
+  const { token, login } = useContext(AuthContext);
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [mentalHealthData, setMentalHealthData] = useState({
+    stressLevel: "Low",
+    anxietyScore: "Moderate",
+    moodScore: 7,
+    currentStatus: "Balanced",
+  });
+  const [showMoodCheckIn, setShowMoodCheckIn] = useState(false);
+  const [moodCheckInData, setMoodCheckInData] = useState({
+    stressLevel: "Low",
+    anxietyScore: "Moderate",
+    moodScore: 7,
+    currentStatus: "Balanced",
+  });
+
+  // Handle Google OAuth callback on home page
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenFromUrl = urlParams.get("token");
+    const userFromUrl = urlParams.get("user");
+
+    if (tokenFromUrl && userFromUrl) {
+      try {
+        const userData = JSON.parse(decodeURIComponent(userFromUrl));
+        login(tokenFromUrl, userData);
+        // Clean URL after successful login
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+      } catch (err) {
+        console.error("Error parsing OAuth data:", err);
+      }
+    }
+  }, [login]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -28,19 +61,55 @@ export default function Home() {
     if (token) fetchUser();
   }, [token]);
 
+  useEffect(() => {
+    const fetchMentalHealthData = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:5000/api/mental-health",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setMentalHealthData(response.data);
+      } catch (err) {
+        console.error("Failed to fetch mental health data:", err);
+      }
+    };
+    if (token) fetchMentalHealthData();
+  }, [token]);
+
+  const handleMoodCheckIn = async () => {
+    try {
+      const response = await axios.put(
+        "http://localhost:5000/api/mental-health",
+        moodCheckInData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setMentalHealthData(response.data);
+      setShowMoodCheckIn(false);
+      alert("Mood check-in updated successfully!");
+    } catch (err) {
+      console.error("Failed to update mood check-in:", err);
+      alert("Failed to update mood check-in");
+    }
+  };
+
   return (
     <Layout>
       <div className="min-h-screen bg-white p-4 sm:p-6 lg:p-8">
         {/* Welcome Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+        <div className="mb-6 relative  ml-[50px]">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 relative inline-block">
+            <span className="absolute -left-4 top-0 bottom-0 w-16 bg-yellow-300 -z-10 transform -skew-x-12"></span>
             Welcome back, {user?.name || "Sophia"}
           </h1>
         </div>
 
         {/* Your Wellness Overview */}
         <div className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4  ml-[50px]">
             Your Wellness Overview
           </h2>
 
@@ -57,8 +126,12 @@ export default function Home() {
               />
             </div> */}
             <div>
-              <h3 className="font-semibold text-gray-900">Sophia</h3>
-              <p className="text-sm text-gray-500">Current Status: Balanced</p>
+              <h3 className="font-semibold text-gray-900">
+                {user?.name || "Sophia"}
+              </h3>
+              <p className="text-sm text-gray-500">
+                Current Status: {mentalHealthData.currentStatus}
+              </p>
             </div>
           </div>
 
@@ -66,15 +139,21 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div className="bg-white rounded-xl p-4 border border-gray-200">
               <p className="text-sm text-[#121714] mb-1">Stress Level</p>
-              <p className="text-2xl font-bold text-[#121714]">Low</p>
+              <p className="text-2xl font-bold text-[#121714]">
+                {mentalHealthData.stressLevel}
+              </p>
             </div>
             <div className="bg-white rounded-xl p-4 border border-gray-200">
               <p className="text-sm text-[#121714] mb-1">Anxiety Score</p>
-              <p className="text-2xl font-bold text-[#121714]">Moderate</p>
+              <p className="text-2xl font-bold text-[#121714]">
+                {mentalHealthData.anxietyScore}
+              </p>
             </div>
             <div className="bg-white rounded-xl p-4 border border-gray-200">
               <p className="text-sm text-[#121714] mb-1">Mood Score</p>
-              <p className="text-2xl font-bold text-[#121714]">7/10</p>
+              <p className="text-2xl font-bold text-[#121714]">
+                {mentalHealthData.moodScore}/10
+              </p>
             </div>
           </div>
         </div>
@@ -157,10 +236,122 @@ export default function Home() {
             >
               Chat with AI Therapist
             </button>
-            <button className="bg-[#F0F5F2] border  hover:bg-gray-50 text-gray-900 px-4 py-2 rounded-lg font-medium transition-colors ">
+            <button
+              onClick={() => setShowMoodCheckIn(!showMoodCheckIn)}
+              className="bg-[#F0F5F2] border  hover:bg-gray-50 text-gray-900 px-4 py-2 rounded-lg font-medium transition-colors "
+            >
               Mood Check-in
             </button>
           </div>
+
+          {/* Mood Check-in Modal */}
+          {showMoodCheckIn && (
+            <div className="mt-6 bg-white rounded-xl p-6 border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Update Your Mental Health Status
+              </h3>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Stress Level
+                  </label>
+                  <select
+                    value={moodCheckInData.stressLevel}
+                    onChange={(e) =>
+                      setMoodCheckInData({
+                        ...moodCheckInData,
+                        stressLevel: e.target.value,
+                      })
+                    }
+                    className="w-full p-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="Low">Low</option>
+                    <option value="Moderate">Moderate</option>
+                    <option value="High">High</option>
+                    <option value="Very High">Very High</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Anxiety Score
+                  </label>
+                  <select
+                    value={moodCheckInData.anxietyScore}
+                    onChange={(e) =>
+                      setMoodCheckInData({
+                        ...moodCheckInData,
+                        anxietyScore: e.target.value,
+                      })
+                    }
+                    className="w-full p-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="Low">Low</option>
+                    <option value="Moderate">Moderate</option>
+                    <option value="High">High</option>
+                    <option value="Severe">Severe</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Mood Score (1-10)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={moodCheckInData.moodScore}
+                    onChange={(e) =>
+                      setMoodCheckInData({
+                        ...moodCheckInData,
+                        moodScore: parseInt(e.target.value),
+                      })
+                    }
+                    className="w-full p-2 border border-gray-300 rounded-lg"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Current Status
+                  </label>
+                  <select
+                    value={moodCheckInData.currentStatus}
+                    onChange={(e) =>
+                      setMoodCheckInData({
+                        ...moodCheckInData,
+                        currentStatus: e.target.value,
+                      })
+                    }
+                    className="w-full p-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="Balanced">Balanced</option>
+                    <option value="Stressed">Stressed</option>
+                    <option value="Anxious">Anxious</option>
+                    <option value="Happy">Happy</option>
+                    <option value="Sad">Sad</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-3 mt-4">
+                  <button
+                    onClick={handleMoodCheckIn}
+                    className="flex-1 bg-[#2BED8C] hover:bg-green-600 text-black px-4 py-2 rounded-lg font-medium transition-colors"
+                  >
+                    Save Check-in
+                  </button>
+                  <button
+                    onClick={() => setShowMoodCheckIn(false)}
+                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-900 px-4 py-2 rounded-lg font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Saved Items */}

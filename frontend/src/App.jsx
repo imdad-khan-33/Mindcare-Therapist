@@ -1,5 +1,3 @@
-"use client";
-
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, AuthContext } from "./context/AuthContext.jsx";
 import { useEffect, useContext } from "react";

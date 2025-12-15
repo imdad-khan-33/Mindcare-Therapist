@@ -13,7 +13,7 @@ export default function Sessions() {
   const [sessions, setSessions] = useState([]);
   const [therapistName, setTherapistName] = useState("");
   const [type, setType] = useState("Video");
-  const [duration, setDuration] = useState(60);
+  const [duration, setDuration] = useState(45); // Default 45 minutes
   const [date, setDate] = useState("");
   const [currentMonth, setCurrentMonth] = useState(new Date(2025, 4));
   const [selectedDate, setSelectedDate] = useState(4);
@@ -21,6 +21,11 @@ export default function Sessions() {
   // States for success/error messages
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+
+  // States for reschedule modal
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [rescheduleSession, setRescheduleSession] = useState(null);
+  const [rescheduleDate, setRescheduleDate] = useState("");
 
   const recommendedSessions = [
     {
@@ -58,20 +63,30 @@ export default function Sessions() {
     // },
   ];
 
-  const pastSessions = [
+  const [pastSessions, setPastSessions] = useState([
     {
       id: 1,
       title: "Group Therapy",
-      date: "Jul 10, 2024 - 3:00 AM",
+      description: "Share experiences with others facing similar challenges",
+      date: "Jul 10, 2024 - 3:00 PM",
+      therapist: "Dr. Sarah Johnson",
+      type: "Video",
+      duration: 90,
+      maxParticipants: 8,
       status: "Reschedule",
     },
     {
       id: 2,
       title: "Couples Therapy",
-      date: "Jul 8, 2024 - 4:00 AM",
+      description: "Strengthen your relationship through guided sessions",
+      date: "Jul 8, 2024 - 4:00 PM",
+      therapist: "Dr. Michael Chen",
+      type: "In-Person",
+      duration: 60,
+      participants: 2,
       status: "Reschedule",
     },
-  ];
+  ]);
 
   useEffect(() => {
     if (token) {
@@ -113,7 +128,7 @@ export default function Sessions() {
       // Reset form
       setTherapistName("");
       setType("Video");
-      setDuration(60);
+      setDuration(45);
       setDate("");
 
       // Refresh sessions
@@ -183,15 +198,46 @@ export default function Sessions() {
     year: "numeric",
   });
 
+  const handleReschedule = (session) => {
+    setRescheduleSession(session);
+    setShowRescheduleModal(true);
+    setRescheduleDate("");
+  };
+
+  const handleRescheduleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      // Update the session with new date
+      const updatedSessions = pastSessions.map((s) =>
+        s.id === rescheduleSession.id
+          ? { ...s, date: new Date(rescheduleDate).toLocaleString() }
+          : s
+      );
+
+      setPastSessions(updatedSessions);
+      setSuccessMessage(`${rescheduleSession.title} rescheduled successfully!`);
+      setShowRescheduleModal(false);
+
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (err) {
+      setErrorMessage("Failed to reschedule session");
+      setTimeout(() => setErrorMessage(""), 3000);
+    }
+  };
+
   return (
     <Layout>
       <div className="min-h-screen p-4 md:p-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-[#0D1C14] text-2xl md:text-3xl font-bold mb-2 mt-[30px] pl-[20px]">
-            Therapy Sessions
-          </h1>
-          <p className="text-sm md:text-base text-[#618A75] pl-[20px]">
+        <div className="mb-8 mt-[30px] pl-[20px]  ml-[50px]">
+          <div className="relative inline-block mb-2  ">
+            <span className="absolute -left-4 top-0 bottom-0 w-16 bg-yellow-300 -z-10 transform -skew-x-12"></span>
+            <h1 className="text-[#0D1C14] text-2xl md:text-3xl font-bold relative">
+              Therapy Sessions
+            </h1>
+          </div>
+          <p className="text-sm md:text-base text-[#618A75]">
             Manage your therapy sessions and schedule
           </p>
         </div>
@@ -311,24 +357,33 @@ export default function Sessions() {
                     onChange={(e) => setType(e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   >
-                    <option>Video</option>
-                    <option>Phone</option>
-                    <option>In-Person</option>
+                    <option value="Video">Video Call (Zoom)</option>
+                    <option value="Google Meet"> Google Meet</option>
+                    <option value="Phone">Phone Call</option>
+                    <option value="In-Person">In-Person Meeting</option>
+                    <option value="Chat">Text Chat Only</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Duration (min)
+                    Duration
                   </label>
-                  <input
-                    type="number"
+                  <select
                     value={duration}
-                    onChange={(e) => setDuration(e.target.value)}
+                    onChange={(e) => setDuration(Number(e.target.value))}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                    min="30"
                     required
-                  />
+                  >
+                    <option value={15}>Quick - 15 minutes</option>
+                    <option value={30}>Short - 30 minutes</option>
+                    <option value={45}>Standard - 45 minutes</option>
+                    <option value={60}>Regular - 60 minutes (1 hour)</option>
+                    <option value={90}>
+                      Extended - 90 minutes (1.5 hours)
+                    </option>
+                    <option value={120}>Long - 120 minutes (2 hours)</option>
+                  </select>
                 </div>
 
                 <div>
@@ -418,19 +473,43 @@ export default function Sessions() {
             {pastSessions.map((session) => (
               <div
                 key={session.id}
-                className="flex flex-col md:flex-row md:items-center md:justify-between p-4 md:p-6"
+                className="flex flex-col md:flex-row md:items-center md:justify-between p-4 md:p-6 border-b last:border-b-0"
               >
-                <div className="flex items-start gap-4 bg-[#E8F2ED]">
-                  <div>
-                    <p className="font-semibold text-[#121714] text-sm md:text-base">
-                      {session.title}
+                <div className="flex items-start gap-4 flex-1">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-semibold text-[#121714] text-sm md:text-base">
+                        {session.title}
+                      </p>
+                      {session.title === "Group Therapy" && (
+                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                          Group
+                        </span>
+                      )}
+                      {session.title === "Couples Therapy" && (
+                        <span className="bg-pink-100 text-pink-800 text-xs px-2 py-1 rounded">
+                          Couples
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-600 mb-1">
+                      {session.description}
                     </p>
                     <p className="text-xs md:text-sm text-[#618A75]">
-                      {session.date}
+                      📅 {session.date}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      👨‍⚕️ {session.therapist} • {session.type} •{" "}
+                      {session.duration} min
+                      {session.maxParticipants &&
+                        ` • Max ${session.maxParticipants} participants`}
                     </p>
                   </div>
                 </div>
-                <button className="mt-4 md:mt-0 w-full md:w-auto px-4 py-2 min-w-[110px] bg-[#E8F2ED] hover:bg-gray-200 rounded-lg text-sm font-medium transition">
+                <button
+                  onClick={() => handleReschedule(session)}
+                  className="mt-4 md:mt-0 w-full md:w-auto px-4 py-2 min-w-[110px] bg-[#E8F2ED] hover:bg-green-100 rounded-lg text-sm font-medium transition text-green-700"
+                >
                   {session.status}
                 </button>
               </div>
@@ -461,6 +540,68 @@ export default function Sessions() {
               ))}
           </div>
         </div>
+
+        {/* Reschedule Modal */}
+        {showRescheduleModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+              <h3 className="text-xl font-semibold text-[#0D1C14] mb-4">
+                Reschedule {rescheduleSession?.title}
+              </h3>
+
+              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600 mb-1">Current Session:</p>
+                <p className="text-sm font-medium text-gray-800">
+                  {rescheduleSession?.date}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {rescheduleSession?.therapist} • {rescheduleSession?.type}
+                </p>
+              </div>
+
+              <form onSubmit={handleRescheduleSubmit}>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select New Date & Time
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={rescheduleDate}
+                    onChange={(e) => setRescheduleDate(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    required
+                    min={new Date().toISOString().slice(0, 16)}
+                  />
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                  <p className="text-xs text-blue-800">
+                    💡 <strong>Note:</strong>
+                    {rescheduleSession?.title === "Group Therapy"
+                      ? " Group sessions have limited spots. Availability may vary."
+                      : " This will reschedule for both participants."}
+                  </p>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowRescheduleModal(false)}
+                    className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-medium transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition"
+                  >
+                    Confirm Reschedule
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
