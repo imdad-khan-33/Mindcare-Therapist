@@ -15,7 +15,7 @@ import exerciseRoutes from "./routes/exercises.js";
 import userRoutes from "./routes/user.js";
 import bookingsRoutes from "./routes/bookings.js";
 import mentalHealthRoutes from "./routes/mentalHealth.js";
-import otpRoutes from "./routes/otp.routes.js";
+// import otpRoutes from "./routes/otp.routes.js"; // Using authController
 
 // Import auth config
 import "./config/passport.js";
@@ -76,7 +76,7 @@ app.use("/api/exercises", exerciseRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/bookings", bookingsRoutes);
 app.use("/api/mental-health", mentalHealthRoutes);
-app.use("/api/otp", otpRoutes);
+// app.use("/api/otp", otpRoutes); // Using authController for OTP
 
 // Serve frontend
 if (process.env.NODE_ENV === "production") {

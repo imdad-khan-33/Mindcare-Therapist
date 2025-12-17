@@ -141,7 +141,7 @@ export default function ForgotPassword() {
                     onChange={(e) =>
                       setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7EC4B8] focus:border-transparent text-sm outline-none text-center text-2xl font-bold tracking-widest"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7EC4B8] focus:border-transparent text-sm outline-none text-center  font-bold tracking-widest"
                     placeholder="123456"
                     maxLength={6}
                     required

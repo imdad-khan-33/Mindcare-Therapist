@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import OTP from "../models/Otp.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
@@ -207,16 +208,19 @@ export const forgotPassword = async (req, res) => {
     }
 
     // Generate 6-digit OTP
-    const otp = crypto.randomInt(100000, 999999).toString();
-
-    // Hash the OTP and save to user model
-    user.resetPasswordToken = crypto
+    const plainOtp = crypto.randomInt(100000, 999999).toString();
+    const hashedOtp = crypto
       .createHash("sha256")
-      .update(otp)
+      .update(plainOtp)
       .digest("hex");
-    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    await user.save({ validateBeforeSave: false });
+    // Save in OTP collection
+    await OTP.findOneAndUpdate(
+      { email },
+      { otp: hashedOtp, expiresAt, verified: false },
+      { upsert: true, new: true }
+    );
 
     // Send email with OTP
     const message = `
@@ -229,7 +233,7 @@ export const forgotPassword = async (req, res) => {
           <p style="color: #344054; font-size: 16px; margin-bottom: 30px;">Your OTP code is:</p>
           <div style="text-align: center; margin: 30px 0;">
             <div style="display: inline-block; background-color: #f0f9f7; padding: 20px 40px; border-radius: 10px; border: 2px solid #7EC4B8;">
-              <h1 style="color: #7EC4B8; font-size: 36px; margin: 0; letter-spacing: 8px; font-weight: bold;">${otp}</h1>
+              <h1 style="color: #7EC4B8; font-size: 36px; margin: 0; letter-spacing: 8px; font-weight: bold;">${plainOtp}</h1>
             </div>
           </div>
           <p style="color: #dc2626; font-size: 14px; text-align: center; margin-top: 20px; font-weight: 600;">⏱️ This OTP will expire in 5 minutes</p>
@@ -259,12 +263,9 @@ export const forgotPassword = async (req, res) => {
         message: "Email sent successfully",
       });
     } catch (err) {
-      console.error("❌ Email sending error:", err);
+      console.error(" Email sending error:", err);
 
-      user.resetPasswordToken = undefined;
-      user.resetPasswordExpire = undefined;
-
-      await user.save({ validateBeforeSave: false });
+      await OTP.findOneAndDelete({ email });
 
       return res.status(500).json({
         success: false,
@@ -293,30 +294,45 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    // Hash the OTP to compare with stored hash
-    const resetPasswordToken = crypto
-      .createHash("sha256")
-      .update(otp)
-      .digest("hex");
-
-    const user = await User.findOne({
-      email,
-      resetPasswordToken,
-      resetPasswordExpire: { $gt: Date.now() },
-    });
-
+    // Find user by email
+    const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({
-        message: "Invalid or expired OTP",
+      return res.status(404).json({
+        message: "User not found",
       });
     }
 
-    // Set new password (will be hashed by pre-save hook)
-    user.password = password;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
+    // Find OTP record from OTP collection
+    const otpRecord = await OTP.findOne({ email });
+    if (!otpRecord) {
+      return res.status(400).json({
+        message: "OTP not found or already used",
+      });
+    }
 
+    // Check if OTP is expired
+    if (otpRecord.expiresAt < new Date()) {
+      await OTP.findOneAndDelete({ email });
+      return res.status(400).json({
+        message: "OTP has expired",
+      });
+    }
+
+    // Hash the user-provided OTP and compare
+    const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
+
+    if (hashedOtp !== otpRecord.otp) {
+      return res.status(400).json({
+        message: "Invalid OTP",
+      });
+    }
+
+    // OTP is valid - Update password
+    user.password = password;
     await user.save();
+
+    // Delete OTP after successful password reset
+    await OTP.findOneAndDelete({ email });
 
     res.status(200).json({
       success: true,
