@@ -15,6 +15,8 @@ const UserSchema = new mongoose.Schema(
     avatar: String,
     bio: String,
     therapyGoals: String,
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
     level: { type: Number, default: 1 },
   },
   { timestamps: true }

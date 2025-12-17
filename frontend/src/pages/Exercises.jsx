@@ -263,10 +263,11 @@ const ExercisesPage = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
           {/* Header */}
           <div className="mb-10 sm:mb-14  ml-[50px]">
-            <h1 className="  text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 sm:mb-4">
+            <h1 className="text-3xl font-bold text-gray-900">
               Wellness Exercises
             </h1>
-            <p className="text-base sm:text-lg text-gray-600 max-w-2xl">
+
+            <p className="text-base sm:text-mdext-gray-600 max-w-2xl">
               Explore a variety of exercises designed to support your mental
               wellness journey
             </p>

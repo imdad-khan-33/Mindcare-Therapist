@@ -5,6 +5,8 @@ import {
   login,
   logout,
   googleAuthCallback,
+  forgotPassword,
+  resetPassword,
 } from "../controllers/authController.js";
 
 const router = express.Router();
@@ -17,6 +19,12 @@ router.post("/login", login);
 
 // Logout Route
 router.post("/logout", logout);
+
+// Forgot Password Route
+router.post("/forgot-password", forgotPassword);
+
+// Reset Password Route
+router.post("/reset-password/:token", resetPassword);
 
 // Google Auth Routes
 router.get(

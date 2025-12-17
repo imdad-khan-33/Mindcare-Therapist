@@ -10,6 +10,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState("");
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -76,88 +77,162 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-teal-50 px-4 py-8">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-            Welcome Back!
-          </h1>
-          <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8">
-            Sign in to continue your journey to mental wellness.
+    <div className="fixed inset-0 w-screen h-screen overflow-hidden align-center justify-center">
+      <div
+        className="w-full h-full flex flex-col items-center justify-center p-5"
+        style={{
+          background: "url('/assets/bg-login.png') no-repeat center center",
+          backgroundSize: "100% 100%",
+        }}
+      >
+        {/* Heading outside the card */}
+        {/* <h1 className="font-inter font-semibold text-[32px] leading-tight text-center mb-6 text-black">
+          Login to Chatbot Therapy
+        </h1> */}
+
+        {/* White card form */}
+        <div className=" mt-[50px] w-[450px]  max-w-full bg-white rounded-[20px] px-[72px] py-12 shadow-lg flex flex-col gap-6">
+          <p className="font-inter text-xl font-extrabold text-left m-0 text-black">
+            Login to an account
           </p>
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          {/* Auth Tabs */}
+          <div className="flex gap-2 ">
+            <a
+              href="http://localhost:5000/api/auth/google"
+              className="flex-1 py-2 px-4 text-center text-white rounded-lg text-base font-semibold transition-colors"
+              style={{ backgroundColor: "#7EC4B8" }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = "#6DB3A7")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#7EC4B8")
+              }
+            >
+              <img
+                src="/assets/google.svg"
+                alt="Google"
+                className="inline-block  mr-2 align-middle"
+              />
+              Google
+            </a>
+            <button
+              type="button"
+              className="flex-1 py-2 px-4 text-center text-white rounded-lg text-base font-semibold transition-colors flex items-center justify-center"
+              style={{ backgroundColor: "#7EC4B8" }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = "#6DB3A7")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#7EC4B8")
+              }
+            >
+              <div className="w-7 h-7 bg-[#1877F2] rounded-full flex items-center justify-center mr-2">
+                <img
+                  src="assets/facebook.svg"
+                  alt="Facebook"
+                  className="w-[20px] h-[20px] object-contain"
+                />
+              </div>
+              Facebook
+            </button>
+          </div>
+
+          <form onSubmit={handleLogin} className="flex flex-col gap-5">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-xs sm:text-sm">
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
             <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[#344054] mb-2">
                 Email
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="you@example.com"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7EC4B8] focus:border-transparent text-sm outline-none"
+                placeholder="name@gmail.com"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="••••••••"
-                required
-                minLength={6}
-              />
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm font-medium text-[#344054]">
+                  Password
+                </label>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-gray-500 hover:text-[#7EC4B8] hover:underline"
+                >
+                  Forgot?
+                </Link>
+              </div>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7EC4B8] focus:border-transparent text-sm outline-none"
+                  placeholder="Enter your password"
+                  required
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? (
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    ></svg>
+                  ) : (
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    ></svg>
+                  )}
+                </button>
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 sm:py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+              className="w-full text-white font-medium py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+              style={{ backgroundColor: "#7EC4B8" }}
+              onMouseEnter={(e) =>
+                !loading && (e.currentTarget.style.backgroundColor = "#6DB3A7")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#7EC4B8")
+              }
             >
-              {loading ? "Logging in..." : "Login"}
+              {loading ? "Logging in..." : "Create account"}
             </button>
           </form>
 
-          <div className="my-6 flex items-center">
-            <div className="flex-1 border-t border-gray-300"></div>
-            <span className="px-3 text-gray-500 text-xs sm:text-sm">or</span>
-            <div className="flex-1 border-t border-gray-300"></div>
-          </div>
-
-          <a
-            href="http://localhost:5000/api/auth/google"
-            className="w-full flex items-center justify-center gap-2 border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2.5 sm:py-3 rounded-lg transition-colors text-sm sm:text-base"
-          >
-            <img
-              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-              alt="Google"
-              className="w-4 h-4 sm:w-5 sm:h-5"
-            />
-            Sign in with Google
-          </a>
-
-          <p className="text-center text-gray-600 text-xs sm:text-sm mt-6">
-            Don't have an account?{" "}
+          <div className="text-center">
+            <span className="text-sm text-[#44615D]">
+              Don't have an Account?{" "}
+            </span>
             <Link
               to="/signup"
-              className="text-blue-600 hover:underline font-medium"
+              className="text-sm font-medium hover:underline"
+              style={{ color: "#44615D" }}
             >
-              Sign up
+              Sign Up
             </Link>
-          </p>
+          </div>
         </div>
       </div>
     </div>
