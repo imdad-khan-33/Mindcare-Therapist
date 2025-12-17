@@ -232,7 +232,7 @@ export const forgotPassword = async (req, res) => {
               <h1 style="color: #7EC4B8; font-size: 36px; margin: 0; letter-spacing: 8px; font-weight: bold;">${otp}</h1>
             </div>
           </div>
-          <p style="color: #dc2626; font-size: 14px; text-align: center; margin-top: 20px; font-weight: 600;">⏱️ This OTP will expire in 10 minutes</p>
+          <p style="color: #dc2626; font-size: 14px; text-align: center; margin-top: 20px; font-weight: 600;">⏱️ This OTP will expire in 5 minutes</p>
           <p style="color: #666; font-size: 14px; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 20px;">If you did not request this, please ignore this email and your password will remain unchanged.</p>
         </div>
       </div>
