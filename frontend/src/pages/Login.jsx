@@ -217,7 +217,7 @@ export default function Login() {
                 (e.currentTarget.style.backgroundColor = "#7EC4B8")
               }
             >
-              {loading ? "Logging in..." : "Create account"}
+              {loading ? "Logging in..." : "Login to account"}
             </button>
           </form>
 

@@ -24,7 +24,7 @@ router.post("/logout", logout);
 router.post("/forgot-password", forgotPassword);
 
 // Reset Password Route
-router.post("/reset-password/:token", resetPassword);
+router.post("/reset-password", resetPassword);
 
 // Google Auth Routes
 router.get(

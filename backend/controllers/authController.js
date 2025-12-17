@@ -206,34 +206,35 @@ export const forgotPassword = async (req, res) => {
         .json({ message: "User with this email not found" });
     }
 
-    // Generate reset token
-    const resetToken = crypto.randomBytes(20).toString("hex");
+    // Generate 6-digit OTP
+    const otp = crypto.randomInt(100000, 999999).toString();
 
-    // Hash the token and save to user model
+    // Hash the OTP and save to user model
     user.resetPasswordToken = crypto
       .createHash("sha256")
-      .update(resetToken)
+      .update(otp)
       .digest("hex");
     user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
 
     await user.save({ validateBeforeSave: false });
 
-    // Create reset URL for frontend
-    const resetUrl = `${process.env.REACT_APP_URL}/reset-password/${resetToken}`;
-
-    // Send email
+    // Send email with OTP
     const message = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #7EC4B8;">Password Reset Request</h2>
-        <p>You are receiving this email because you (or someone else) have requested to reset your password.</p>
-        <p>Please click on the button below to reset your password:</p>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${resetUrl}" style="background-color: #7EC4B8; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">Reset Password</a>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb; border-radius: 10px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h2 style="color: #7EC4B8; margin-bottom: 10px;">Password Reset OTP</h2>
         </div>
-        <p>Or copy and paste this link in your browser:</p>
-        <p style="color: #7EC4B8; word-break: break-all;">${resetUrl}</p>
-        <p style="color: #666; font-size: 14px; margin-top: 30px;">This link will expire in 10 minutes.</p>
-        <p style="color: #666; font-size: 14px;">If you did not request this, please ignore this email and your password will remain unchanged.</p>
+        <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <p style="color: #344054; font-size: 16px; margin-bottom: 20px;">You are receiving this email because you (or someone else) have requested to reset your password.</p>
+          <p style="color: #344054; font-size: 16px; margin-bottom: 30px;">Your OTP code is:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <div style="display: inline-block; background-color: #f0f9f7; padding: 20px 40px; border-radius: 10px; border: 2px solid #7EC4B8;">
+              <h1 style="color: #7EC4B8; font-size: 36px; margin: 0; letter-spacing: 8px; font-weight: bold;">${otp}</h1>
+            </div>
+          </div>
+          <p style="color: #dc2626; font-size: 14px; text-align: center; margin-top: 20px; font-weight: 600;">⏱️ This OTP will expire in 10 minutes</p>
+          <p style="color: #666; font-size: 14px; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 20px;">If you did not request this, please ignore this email and your password will remain unchanged.</p>
+        </div>
       </div>
     `;
 
@@ -281,25 +282,37 @@ export const forgotPassword = async (req, res) => {
   }
 };
 
-// Reset Password Controller
+// Reset Password Controller (with OTP)
 export const resetPassword = async (req, res) => {
   try {
+    const { email, otp, password } = req.body;
+
+    if (!email || !otp || !password) {
+      return res.status(400).json({
+        message: "Please provide email, OTP, and new password",
+      });
+    }
+
+    // Hash the OTP to compare with stored hash
     const resetPasswordToken = crypto
       .createHash("sha256")
-      .update(req.params.token)
+      .update(otp)
       .digest("hex");
 
     const user = await User.findOne({
+      email,
       resetPasswordToken,
       resetPasswordExpire: { $gt: Date.now() },
     });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid or expired token" });
+      return res.status(400).json({
+        message: "Invalid or expired OTP",
+      });
     }
 
     // Set new password (will be hashed by pre-save hook)
-    user.password = req.body.password;
+    user.password = password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
 
